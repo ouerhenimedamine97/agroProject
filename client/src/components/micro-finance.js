@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function MicroFinance(props) {
-    const [storageValue, setStorageValue] = useState(undefined);
+    
     const [web3, setWeb3] = useState(undefined);
     const [accounts, setAccounts] = useState(undefined);
     const [contract, setContract] = useState(undefined);
@@ -14,7 +14,7 @@ function MicroFinance(props) {
         console.log(message);
     }
 
-    const sb = (event) => {
+    const sb = async (event) => {
         event.preventDefault();
         var fident = document.getElementById("fid").value;
         var fidBytes = web3.utils.asciiToHex(fident);
@@ -22,13 +22,13 @@ function MicroFinance(props) {
         var lotNumBytes = web3.utils.asciiToHex(lotNum);
         var amt = document.getElementById("fundAmount").value;
         var rc;
-        contract.methods.getproduce(fidBytes).call().then((value) => {  
-            rc = value[7];
+        await contract.methods.getAddresse(fidBytes).call().then((value) => {  
+            rc = value;
         }).catch(function (e) {
             console.log(e);
             setStatus("Error getting value; see log.");
         });
-        console.log(rc);
+        //console.log(rc);
         contract.methods.sendCoin(rc, amt, accounts[0]).send({ from: accounts[0] }).then((value) => {
             console.log("Transaction complete!");
         }).catch((e) => {

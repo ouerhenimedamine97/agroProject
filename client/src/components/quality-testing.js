@@ -5,11 +5,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function QualityTesting(props) {
-    const [storageValue, setStorageValue] = useState(undefined);
+    
     const [web3, setWeb3] = useState(undefined);
     const [accounts, setAccounts] = useState(undefined);
     const [contract, setContract] = useState(undefined);
-    const [fid, setFid] = useState(undefined);
+    
     const [fname, setFname] = useState(undefined);
     const [loc, setLoc] = useState(undefined);
     const [crop, setCrop] = useState(undefined);
@@ -18,11 +18,12 @@ function QualityTesting(props) {
     const [exprice, setExprice] = useState(undefined);
     const [blockNum, setBlockNum] = useState(undefined);
     const [bl, setBl] = useState(undefined);
+    const [aprDetail, setAprDetail] = useState(undefined);
     const setStatus = (message) => {
         console.log(message);
     }
-    const navigate = ()=>{
-        props.history.push('/product');
+    const navigate = () => {
+        setAprDetail(true);
     }
     const printTransaction = async (txHash = null) => {
         var obj;
@@ -34,15 +35,15 @@ function QualityTesting(props) {
             await web3.eth.getTransaction(tHash).then((v) => {
                 obj = {
                     hash: v.hash,
-                    nonce:	v.nonce,	
-                    blockHash: v.blockHash,		
-                    blockNumber: v.blockNumber,	
+                    nonce: v.nonce,
+                    blockHash: v.blockHash,
+                    blockNumber: v.blockNumber,
                     transactionIndex: v.transactionIndex,
                     from: v.from,
                     to: v.to,
-                    value: v.value,	
-                    gas: v. gas,
-                    gasPrice: v.gasPrice,		
+                    value: v.value,
+                    gas: v.gas,
+                    gasPrice: v.gasPrice,
                     input: v.input,
                 };
             });
@@ -51,15 +52,15 @@ function QualityTesting(props) {
             await web3.eth.getTransaction(txHash).then((v) => {
                 obj = {
                     hash: v.hash,
-                    nonce:	v.nonce,	
-                    blockHash: v.blockHash,		
-                    blockNumber: v.blockNumber,	
+                    nonce: v.nonce,
+                    blockHash: v.blockHash,
+                    blockNumber: v.blockNumber,
                     transactionIndex: v.transactionIndex,
                     from: v.from,
                     to: v.to,
-                    value: v.value,	
-                    gas: v. gas,
-                    gasPrice: v.gasPrice,		
+                    value: v.value,
+                    gas: v.gas,
+                    gasPrice: v.gasPrice,
                     input: v.input,
                 };
             });
@@ -73,7 +74,7 @@ function QualityTesting(props) {
         });
         var obj;
         await web3.eth.getBlock(block).then((v) => {
-            if(v.transactions.length > 1){
+            if (v.transactions.length > 1) {
                 obj = {
                     blockNumber: block,
                     hash: v.hash,
@@ -95,7 +96,7 @@ function QualityTesting(props) {
                     uncles: v.uncles
                 }
             }
-            else{
+            else {
                 obj = {
                     blockNumber: block,
                     hash: v.hash,
@@ -132,11 +133,35 @@ function QualityTesting(props) {
         setBlockNum(block);
         setBl(true);
     }
+    const apr = (event) => {
+        event.preventDefault();
+        var lotNumber = document.getElementById("lotNumber").value;
+        // var lotNumberStr = lotNumber.toString();
+        var prodID = document.getElementById("prodId").value;
+        var grade = document.getElementById("grade").value;
+        var price = document.getElementById("price").value;
+        var testDate = document.getElementById("testDate").value;
+        var expiryDate = document.getElementById("expiryDate").value;
+        
+        //console.log({ lotNumber, grade, price, testDate, expiryDate});
+        var lotNumberBytes = web3.utils.toHex(lotNumber);
+        var prodIDBytes = web3.utils.toHex(prodID);
+        var gradeBytes32 = web3.utils.toHex(grade);
+        var testDateBytes32 = web3.utils.toHex(testDate);
+        var expiryDateBytes32 = web3.utils.toHex(expiryDate);
+        // console.log("contract : ",contract.methods);
+        contract.methods.quality(lotNumberBytes, prodIDBytes, gradeBytes32, price, testDateBytes32, expiryDateBytes32).send({ from: accounts[0] }).then(()=>{
+            setStatus("Transaction complete!");
+        }).catch((e)=>{
+            setStatus("Error setting value");
+            console.log(e);
+        });
+    }
     const sb = (event) => {
         event.preventDefault();
-        var fident = document.getElementById("fid").value;
-        var fidBytes = web3.utils.asciiToHex(fident);
-        contract.methods.getproduce(fidBytes).call().then((value) => {
+        var pident = document.getElementById("pid").value;
+        var pidBytes = web3.utils.asciiToHex(pident);
+        contract.methods.getproduce(pidBytes).call().then((value) => {
             console.table(value);
             var farmerName = web3.utils.hexToAscii(value[1]);
             farmerName = farmerName.replaceAll("\x00", "");
@@ -189,6 +214,7 @@ function QualityTesting(props) {
                 setQuantity("");
                 setExprice("");
                 setBl(false);
+                setAprDetail(false);
 
             } catch (error) {
                 // Catch any errors for any of the above operations.
@@ -220,7 +246,7 @@ function QualityTesting(props) {
                 <div className='row' style={{ marginTop: '15px' }}>
                     <div className='col-3'></div>
                     <div className='col-6'>
-                        <input type='text' placeholder='Enter farmer ID' className='form-control' required id='fid' />
+                        <input type='text' placeholder='Enter product ID' className='form-control' required id='pid' />
                     </div>
 
                     <div className='col-3'></div>
@@ -297,6 +323,90 @@ function QualityTesting(props) {
                     <button onClick={navigate} style={{ width: '100%' }} className='btn btn-success'>Approve Details</button>
                 </div>
                 <div className='col-3'></div>
+            </div>
+            <div className='row'>
+                {aprDetail ? 
+                <form onSubmit={e => { apr(e) }}>
+                <div className='row ' style={{ marginTop: '20px' }}>
+                    <div className='col-3'></div>
+                    <div className='col-6' style={{ textAlign: 'left' }}><h3>Enter Details</h3></div>
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '10px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} htmlFor='lotNumber' className='form-label'>Lot number</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' required id='lotNumber' />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '10px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} htmlFor='lotNumber' className='form-label'>Product ID </label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' required id='prodId' />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} htmlFor='grade' className='form-label'>Grade</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' id='grade' required />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} required className='form-label' htmlFor='price'>Price</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' id='price' />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} className='form-label' htmlFor='testDate'>Test date</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' id='testDate' required />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} className='form-label' htmlFor='expiryDate'>Expiry date</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' id='expiryDate' required />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-4'></div>
+                    <div className='col-4'>
+                        <button style={{ width: '100%' }} type='submit' className='btn btn-success'>Submit</button>
+                    </div>
+                    <div className='col-4'></div>
+                </div>
+            </form> : null}
             </div>
         </div>
     )

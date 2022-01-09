@@ -1,109 +1,109 @@
 import React, { useState, useEffect } from 'react';
 import StructStorageContract from '../contracts/StructStorage.json';
 import getWeb3 from '../getWeb3';
+import QRCode from 'qrcode';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function Customer(props) {
-    const [storageValue, setStorageValue] = useState(undefined);
     const [web3, setWeb3] = useState(undefined);
     const [accounts, setAccounts] = useState(undefined);
     const [contract, setContract] = useState(undefined);
-    const [fid, setFid] = useState(undefined);
-    const [fname, setFname] = useState(undefined);
-    const [loc, setLoc] = useState(undefined);
-    const [crop, setCrop] = useState(undefined);
-    const [contact, setContact] = useState(undefined);
-    const [quantity, setQuantity] = useState(undefined);
-    const [exprice, setExprice] = useState(undefined);
-    const [lotNb, setLotNb] = useState(undefined);
-    const [grade, setGrade] = useState(undefined);
-    const [mrp, setMrp] = useState(undefined);
-    const [testd, setTestD] = useState(undefined);
-    const [expD, setExpD] = useState(undefined);
+    
+    const [src, setSrc] = useState(undefined);
+    const [qrCode, setQrCode] = useState(undefined);
+    var ltNum;
+    var suppName;
+    var crop;
+    var expiryDate;
+    var price;
+    var storageDate;
+    var prodId;
+    var grade;
+    var farmerName;
+    var ltNumBytes;
+    var pidBytes;
     const setStatus = (message) => {
         console.log(message);
     }
-    const navigate = ()=>{
+    const navigate = () => {
         props.history.push('/product');
     }
-    
-    const getQ = (fidBytes)=> {
-        setStatus("Initiating transaction... (please wait)");
-        contract.methods.getproduce(fidBytes).call().then((value) => {
-            var farmerId = web3.utils.hexToAscii(value[0]);
-            farmerId = farmerId.replaceAll("\x00", "");
-            setFid(farmerId);
-            var farmerName = web3.utils.hexToAscii(value[1]);
-            farmerName = farmerName.replaceAll("\x00", "");
-            setFname(farmerName);
-            var farmerLoc = web3.utils.hexToAscii(value[2]);
-            farmerLoc = farmerLoc.replaceAll("\x00", "");
-            setLoc(farmerLoc);
-            var fCrop = web3.utils.hexToAscii(value[3]);
-            fCrop = fCrop.replaceAll("\x00", "");
-            setCrop(fCrop);
-            var fContact = value[4];
-            setContact(fContact);
-            var quant = value[5];
-            setQuantity(quant);
-            var price = value[6];
-            setExprice(price);
-        }).catch(function (e) {
-            console.log(e);
-            setStatus("Error getting value; see log.");
-        });
+
+    const getQRCode = () => {
+        var info = "";
+        info = "Lot number : " + ltNum + "\nSupplier name : " + suppName + "\nPrice : " + price + "\nExpiry date : " + expiryDate + "\nStorage date : " + storageDate + "\nCrop : " + crop + "\nGrade : " + grade + "\nProduct ID : " + prodId + "\nFarmer name : " + farmerName;
+        QRCode.toDataURL(info).then((data)=>{
+            setSrc(data)
+            setQrCode(true)
+        }) 
+        
     }
-    const cgetQ = (lotNumBytes)=>{
-        setStatus("Initiating transaction... (please wait)");
-        contract.methods.getquality(lotNumBytes).call().then((value)=>{
-            var ltNum = web3.utils.hexToAscii(value[0]);
-            ltNum = ltNum.replaceAll("\x00", "");
-            setLotNb(ltNum)
-            var gd = web3.utils.hexToAscii(value[1]);
-            gd = gd.replaceAll("\x00", "");
-            setGrade(gd);
-            var m = value[2];
-            setMrp(m);
-            var tDate = web3.utils.hexToAscii(value[3]);
-            tDate = tDate.replaceAll("\x00", "");
-            setTestD(tDate);
-            var epd = web3.utils.hexToAscii(value[4]);
-            epd = epd.replaceAll("\x00", "");
-            setExpD(epd);
+   
+    const getPrLot = async (lt) => {
+
+        await contract.methods.getprovidedlot(lt).call().then((value) => {
+            var lot = web3.utils.hexToAscii(value[0]);
+            lot = lot.replaceAll("\x00", "");
+            
+            ltNum = lot;
+            var spname = web3.utils.hexToAscii(value[2]);
+            spname = spname.replaceAll("\x00", "");
+           
+            suppName = spname;
+            var ltprice = value[3];
+            
+            price = ltprice;
+            var dtstr = web3.utils.hexToAscii(value[4]);
+            dtstr = dtstr.replaceAll("\x00", "");
+            
+            storageDate = dtstr;
+            
+
         }).catch(function (e) {
+            setStatus("Error ");
             console.log(e);
-            setStatus("Error getting value.");
         });
+        await contract.methods.getquality(ltNumBytes).call().then((value) => {
+            var grd = web3.utils.hexToAscii(value[2]);
+            grd = grd.replaceAll("\x00", "");
+            grade = grd;
+            pidBytes = value[1];
+            var pid = web3.utils.hexToAscii(value[1]);
+            pid = pid.replaceAll("\x00", "");
+            prodId = pid;
+            var expdate = web3.utils.hexToAscii(value[5]);
+            expdate = expdate.replaceAll("\x00", "");
+            expiryDate = expdate;
+
+        }).catch(function (e) {
+            setStatus("Error ");
+            console.log(e);
+        });
+        await contract.methods.getproduce(pidBytes).call().then((value) => {
+            var fname = web3.utils.hexToAscii(value[1]);
+            fname = fname.replaceAll("\x00", "");
+            farmerName = fname;
+            var crp = web3.utils.hexToAscii(value[3]);
+            crp = crp.replaceAll("\x00", "");
+            crop = crp;
+        }).catch(function (e) {
+            setStatus("Error ");
+            console.log(e);
+        });
+        getQRCode();
+
+        
     }
-    const sb = (event) => {
+
+    const sb = async (event) => {
         event.preventDefault();
-        var fident = document.getElementById("fid").value;
-        var fidBytes = web3.utils.asciiToHex(fident);
-        var lotNum = document.getElementById("lotNumber").value;
-        var lotNumBytes = web3.utils.asciiToHex(lotNum);
-        getQ(fidBytes);
-        /*contract.methods.getproduce(fidBytes).call().then((value) => {
-            var farmerName = web3.utils.hexToAscii(value[1]);
-            farmerName = farmerName.replaceAll("\x00", "");
-            setFname(farmerName);
-            var farmerLoc = web3.utils.hexToAscii(value[2]);
-            farmerLoc = farmerLoc.replaceAll("\x00", "");
-            setLoc(farmerLoc);
-            var fCrop = web3.utils.hexToAscii(value[3]);
-            fCrop = fCrop.replaceAll("\x00", "");
-            setCrop(fCrop);
-            var fContact = value[4];
-            setContact(fContact);
-            var quant = value[5];
-            setQuantity(quant);
-            var price = value[6];
-            setExprice(price);
-        }).catch(function (e) {
-            console.log(e);
-            setStatus("Error getting value; see log.");
-        });*/
-        cgetQ(lotNumBytes);
+        var lotNumber = document.getElementById("lotNumber").value;
+        var lotNumberBytes = web3.utils.asciiToHex(lotNumber);
+        ltNumBytes = lotNumberBytes;
+        
+        getPrLot(lotNumberBytes);
+       
     }
     const back = () => {
         props.history.push('/home');
@@ -128,18 +128,8 @@ function Customer(props) {
                 setWeb3(web3);
                 setAccounts(accounts);
                 setContract(contract);
-                setFname("");
-                setLoc("");
-                setCrop("");
-                setContact("")
-                setQuantity("");
-                setExprice("");
-                setFid("")
-                setLotNb("");
-                setGrade("");
-                setMrp("");
-                setTestD("");
-                setExpD("");
+                
+                setQrCode(false);
 
             } catch (error) {
                 // Catch any errors for any of the above operations.
@@ -168,14 +158,6 @@ function Customer(props) {
                 <span class="badge bg-secondary">Public ID : {accounts} </span>
             </div>
             <form onSubmit={e => { sb(e) }}>
-                <div className='row' style={{ marginTop: '15px' }}>
-                    <div className='col-3'></div>
-                    <div className='col-6'>
-                        <input type='text' placeholder='Enter farmer ID' className='form-control' required id='fid' />
-                    </div>
-
-                    <div className='col-3'></div>
-                </div>
                 <div className='row' style={{ marginTop: '10px' }}>
                     <div className='col-3'></div>
                     <div className='col-6'>
@@ -184,91 +166,19 @@ function Customer(props) {
 
                     <div className='col-3'></div>
                 </div>
-                <table className="table">
-                    <tbody>
-                    <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Farmer ID</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{fid}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Lot number</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{lotNb}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Farmer name</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{fname}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Location</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{loc}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Crop</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{crop}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Phone</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{contact}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Quantity</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{quantity}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Expected price</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{exprice}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Grade</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{grade}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>MRP</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{mrp}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Test date</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{testd}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                        <tr className='row'>
-                            <div className='col-3'></div>
-                            <th style={{ textAlign: 'left' }} scope="row" className='col-3'>Expiry date</th>
-                            <td style={{ textAlign: 'left' }} className='col-3'>{expD}</td>
-                            <div className='col-3'></div>
-                        </tr>
-                    </tbody>
-                </table>
+
                 <div className='row' style={{ marginTop: '15px' }}>
                     <div className='col-4'></div>
                     <div className='col-4'>
-                        <button style={{ width: '100%' }} type='submit' className='btn btn-success'>Get Value</button>
+                        <button style={{ width: '100%' }} type='submit' className='btn btn-success'>Get QR Code</button>
                     </div>
                     <div className='col-4'></div>
                 </div>
             </form>
-            
+            <div>
+                {qrCode ? <img src={src}></img> : null}
+            </div>
+
         </div>
     )
 }

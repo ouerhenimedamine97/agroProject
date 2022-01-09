@@ -6,7 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 function Farmer(props) {
-    const [storageValue, setStorageValue] = useState(undefined);
+    
     const [web3, setWeb3] = useState(undefined);
     const [accounts, setAccounts] = useState(undefined);
     const [contract, setContract] = useState(undefined);
@@ -15,6 +15,7 @@ function Farmer(props) {
     }
     const sb = (event) => {
         event.preventDefault();
+        var pid = document.getElementById("pid").value;
         var fid = document.getElementById("fid").value;
         var fname = document.getElementById("fname").value;
         var loc = document.getElementById("loc").value;
@@ -22,24 +23,32 @@ function Farmer(props) {
         var contact = parseInt(document.getElementById("contact").value);
         var quantity = parseInt(document.getElementById("quantity").value);
         var exprice = parseInt(document.getElementById("exprice").value);
+        var pidBytes = web3.utils.toHex(pid);
         var fidBytes = web3.utils.toHex(fid);
         var fnameBytes32 = web3.utils.toHex(fname);
         var locBytes32 = web3.utils.toHex(loc);
         var cropBytes32 = web3.utils.toHex(crop);
         var add = accounts[0];
-        contract.methods.produce(fidBytes, fnameBytes32, locBytes32, cropBytes32, contact, quantity, exprice).send({ from: accounts[0] }).then(()=>{
+        contract.methods.produce(pidBytes, fidBytes, fnameBytes32, locBytes32, cropBytes32, contact, quantity, exprice).send({ from: accounts[0] }).then(()=>{
             setStatus("Transaction complete!");
         }).catch((e)=>{
             setStatus("Error : ");
             console.log(e);
         });
+        
         contract.methods.fundaddr(accounts[0]).send({ from: accounts[0]}).then(()=>{
             setStatus("Account Funded!");
         }).catch((e)=>{
             setStatus("Error setting value");
             console.log(e);
         });
-        //console.log({ fidBytes, fnameBytes32, locBytes32, cropBytes32 });
+        contract.methods.saveAddress(fidBytes, add).send({from: accounts[0]}).then(()=>{
+            setStatus("Address saved")
+        }).catch((e)=>{
+            setStatus("error");
+            console.log(e)
+        })
+        
     }
 
     const back = () => {
@@ -76,14 +85,6 @@ function Farmer(props) {
         }
         init();
     }, []);
-    //useEffect(()=>{
-    // const load = async()=>{
-
-    // }
-    // if(typeof web3 !== 'undefined' && typeof accounts !== 'undefined' && typeof contract !== 'undefined'){
-    //     load();
-    // }
-    // },[web3, accounts, contract])
     if (typeof web3 === 'undefined') {
         return <div className='alert alert-warning'>Loading Web3, accounts, and contract...</div>;
     }
@@ -114,6 +115,17 @@ function Farmer(props) {
                     </div>
                     <div className='col-6'>
                         <input type='text' className='form-control' required id='fid' />
+                    </div>
+
+                    <div className='col-3'></div>
+                </div>
+                <div className='row' style={{ marginTop: '15px' }}>
+                    <div className='col-1'></div>
+                    <div className='col-2'>
+                        <label style={{ textAlign: 'left', width: '100%' }} htmlFor='fid' className='form-label'>Product ID</label>
+                    </div>
+                    <div className='col-6'>
+                        <input type='text' className='form-control' required id='pid' />
                     </div>
 
                     <div className='col-3'></div>

@@ -1,4 +1,40 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Install instructions
+requirements : 
+-Node.js
+-Metamask (You must use google chrome browser)
+-truffle
+-ganache
+## How to run
+before running the application :  
+
+-clone this repo 
+-open terminel
+-cd into the client folder
+-Install the project dependencies : 
+npm install  
+(or yarn )
+After installing required packages : 
+-open ganache application
+-create a new workspace
+-click add project and select truffle-config.js file
+-import accounts to metamask
+-open new terminal window (cd into the cloned project folder)
+-run the following commands : 
+    truffle compile
+    truffle migrate
+    truffle develop
+    migrate --reset
+-open to the client folder
+-open new terminal window
+-run the following command : 
+    npm start
+## Usages
+
+step 1 : go to farmer space and enter product details and leave the farmer space 
+step 2 :  go to quality testing space, you can check exiting product details using existing product id, after that click on approuve details button and enter details (you must enter existing product id) for creating a new lot and leave quality tesing space
+step 3 : go to supplier space, you can verify the lot and product details using an existing lot number, after that click on provide a lot button and enter details (you must enter an existing lot number) to provide a lot and leave the supplier space
+step 4 : go to customer space, enter lot number (used in supplier space for providing a lot)  and you will get a QR Code, scanne it with you smartphone and you will get provided lot details.
 
 ## Available Scripts
 
